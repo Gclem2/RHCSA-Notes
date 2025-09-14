@@ -22,7 +22,8 @@ The notes follow *RHCSA Red Hat Enterprise Linux 9: Training and Exam Preparatio
 - [Firewall and SELinux](firewall_and_selinux.md)  
 - [Shell Scripting](shell_scripting.md)  
 - [Containers](containers.md)  
-- [Troubleshooting](troubleshooting.md)  
+- [Troubleshooting](troubleshooting.md)
+- [Troubleshooting](important_commands.md)  
 
 ---
 
