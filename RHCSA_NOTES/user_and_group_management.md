@@ -111,18 +111,56 @@ login              Login name
 ```
 
 ---
+**chage**: Configure password aging.
+-d (--lastday)     Last password change
+-E (--expiredate)  Expire account on date
+-I (--inactive)    Days after expiry before lock
+-l                 List password aging attributes
+-m (--mindays)     Min days before password change
+-M (--maxdays)     Max password age
+-W (--warndays)    Days before expiry to warn user
 
-## 8. Password Hashing and Security
 
-* Default hashing: **SHA-512**.
-* Password aging, min/max days, warning period configurable in `/etc/login.defs`.
-* Encrypted passwords protect against unauthorized access.
+## 8. Group Management
 
----
+**groupadd**: Create a group.
+-g (--gid)      Specify GID
+-o (--non-unique) Use existing GID
+-r              Create system group (<1000)
+groupname       Name of the group
 
-✅ **Practice Tips**
+**groupmod**: Modify group attributes -n to rename
 
-* Use `id` and `groups` to inspect users.
-* Check `/etc/passwd`, `/etc/shadow`, `/etc/group`, `/etc/gshadow`.
-* Create, modify, and delete users using `useradd`, `usermod`, `userdel`.
-* Monitor logins with `w`, `who`, `last`, `lastb`, and `lastlog`.
+**groupdel**: Remove group entries from /etc/group and /etc/gshadow
+
+
+## 8. Switing Users
+
+**su**: Switch to another user (requires password).
+**whoami**: Shows current effective username.
+**logname**: Shows original username.
+**su -c 'command**': Run a command as another user without switching shell.
+**nologin shell**: Assign to users that should not log in. Located in /sbin/nologin or /usr/sbin/nologin. Can display a custom message via /etc/nologin.txt.
+
+
+## 8. Sudo and Priviledged Access
+**sudo**: Execute commands with elevated privileges. Sudoers configuration edited via visudo.
+Full root access:
+user1    ALL=(ALL) ALL
+%dba     ALL=(ALL) ALL
+
+No password prompt:
+user1    ALL=(ALL) NOPASSWD:ALL
+%dba     ALL=(ALL) NOPASSWD:ALL
+
+Restrict for specific commands:
+user1    ALL=/usr/bin/cat
+%dba     ALL=/usr/bin/cat
+
+Alias for multiple users/commands:
+Cmnd_Alias  PKGCMD = /usr/bin/yum, /usr/bin/rpm
+User_Alias  PKGADM = user1, user100, user200
+PKGADM      ALL = PKGCMD
+
+
+
