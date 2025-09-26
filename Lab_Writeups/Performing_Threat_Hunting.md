@@ -22,7 +22,7 @@ I connected to the **LAMP** VM and signed in as `lamp` (password `Pa$$w0rd`). I 
 sudo su
 # enter Pa$$w0rd when prompted
 
-# enter command for iptables
+# enter command for iptables    
 iptables -A INPUT -j LOG
 ```
 
@@ -58,3 +58,83 @@ Entered to check the ip on eth0 interface
 ip a s eth0
 ```
 ![alt text](images/image4.PNG)
+I see that the ip address for the kali machine is 172.16.0.100
+Switching back to the LAMP machine with the tail command still going I see it is getting network traffic from the kali machines ip from the nmap script
+![alt text](images/image6.png)
+I then used a command to grep out all the instances of that ip from the kernal logs
+```bash
+grep 172.16.0.100 /var/log/kern.log
+```
+![alt text](images/image7.png)
+The logs indicate that there was port scanning being done on different ports by sending syn packets
+
+# Tracking down abnormal connections
+
+## What I did
+Signed into the DC10 windows server then I opend up the command prompt
+Then I entered this command to start the investigation
+
+```
+netstat -nop tcp
+```
+The -n parameter displays numbers instead of hostnames and protocol acronymns
+
+The -o parameter displays the associated PID or process id 
+
+-p limits the display to the specified protcol which we specified to be tcp.
+
+![alt text](images/image8.PNG)
+
+I see that ip addreses 10.1.16.2 and 172.16.0.100 is has a web connnection on multiple ports to the DC10 server
+
+Then I would check the network configuration documentation to find out if those connections are normal
+
+Then I think the PID  associated with web connections is PID for i can type in a specific command to find what that is 
+```
+tasklist /FI "PID eq 4"
+```
+![alt text](images/image9.PNG)
+
+Then I switched to the MS10 windows server opened up the command prompt and entered the same command
+```
+netstat -nop tcp
+```
+![alt text](images/images10.PNG)
+I searched for the pid using this pid
+```
+tasklist /FI "PID eq 4220"
+```
+![alt text](images/image11.PNG)
+I see that it is the process for powershell.exe
+On my computer I naviage to the search bar and type in powershell
+```
+Get-WmiObject win32_process -filter 'processid=4220' > outfile.txt
+```
+Here we are piping the win32 process for the specific pid into an output file. 
+```
+type outfile.txt
+```
+![alt text](images/image12.PNG)
+We need the command line entry so we will use a command to get that out
+```
+Select-String -Path .\outfile.txt -Pattern 'CommandLine'
+```
+Once we get the output of the file location we will cat the script to see what it does then consult to see if its a legitamite script
+![alt text](images/image13.PNG)
+
+We confirmed this activity is normal and will now switch to our kali machine
+
+I will enter the linux netstat command to check for IOC's
+```bash
+netstat -np --protocol=inet
+```
+Then I ran the command again and see that the list returned was different but the program that was in both returns was nc which I know can be used for malicious activity
+
+![alt text](images/image14.PNG)
+
+I then used cat on the script that caused the compromise
+```bash
+echo 10.1.16.1 ca.ad.structreality.com >> /etc/hosts
+while true; do
+    nc ca.ad.structureality.com 443 >/dev/null
+    sleep 10
