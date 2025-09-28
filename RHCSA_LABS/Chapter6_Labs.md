@@ -72,3 +72,24 @@ Put this text in the visudo file
 ![alt text](Images/6-4_image1.PNG)
 You can see after running the vgs command in sudo there is no password prompt
 ![alt text](Images/6-4_image3.PNG)
+
+# Lab 6-5 Modifying Owing User and Group 
+
+![alt text](Images/6-5_image1.png)
+
+``` bash 
+touch /tmp/f6 
+mkdir /tmp/d6 
+```
+
+``` bash 
+sudo useradd user90 
+sudo chown user90 /tmp/f6
+sudo chgrp dbagrp /tmp/f6 
+sudo groupadd g1 
+sudo chown -R user90:g1 /tmp/d6
+```
+
+
+
+
