@@ -1,0 +1,9 @@
+# Obsidian canvas temp files
+Untitled.canvas
+Untitled*.canvas
+Untitled*.md
+
+# Obsidian internal workspace junk
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+

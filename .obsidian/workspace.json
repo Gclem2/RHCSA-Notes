@@ -11,14 +11,13 @@
             "id": "b3bd04efb26ee24d",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "bases",
               "state": {
-                "file": "Lab_Writeups/Performing_Threat_Hunting.md",
-                "mode": "source",
-                "source": false
+                "file": "Untitled 2.base",
+                "viewName": "Table"
               },
-              "icon": "lucide-file",
-              "title": "Performing_Threat_Hunting"
+              "icon": "lucide-table",
+              "title": "Untitled 2"
             }
           }
         ]
@@ -142,13 +141,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Lab_Writeups/Performing_Threat_Hunting.md",
+                "file": "Untitled 2.base",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Performing_Threat_Hunting"
+              "title": "Outline of Untitled 2"
             }
           },
           {
@@ -182,8 +181,16 @@
   },
   "active": "b3bd04efb26ee24d",
   "lastOpenFiles": [
-    "RHCSA_NOTES/bash_shell.md",
+    "RHCSA_Labs/attachment/7b49e0f96515858d0ae6e9165a9db3be.png",
+    "Untitled 2.base",
+    "Untitled.base",
+    "RHCSA_Labs/attachment/0c262aaccfbd00d94ad0ecc992ef33fc.png",
+    "README.md",
+    "2025-11-12.md",
+    "Untitled 1.base",
+    "Untitled.canvas",
     "Lab_Writeups/Performing_Threat_Hunting.md",
+    "RHCSA_NOTES/bash_shell.md",
     "RHCSA_NOTES/user_and_group_management.md",
     "RHCSA_NOTES/troubleshooting.md",
     "RHCSA_NOTES/system_tuning.md",
@@ -212,18 +219,10 @@
     "RHCSA_Labs/attachment/bf077cffe8d0d144011d3fae1e0441ab.png",
     "RHCSA_Labs/attachment/c49cf3d80ea554061ca238ff9d5fed6a.PNG",
     "RHCSA_Labs/attachment/d5c9783a8090dda6df2d7984d8c9a22c.png",
-    "RHCSA_Labs/attachment/caed09e2fe84780a3e717f65b809f15a.PNG",
     "RHCSA_LABS/Chapter11_Labs.md",
     "RHCSA_Labs/Chapter8_Labs.md",
     "RHCSA_Labs/Chapter11_Labs.md",
-    "Untitled.canvas",
-    "RHCSA_Labs/Chapter10_Labs.md",
-    "RHCSA_Labs/Chapter9_Labs.md",
-    "RHCSA_Labs/Chapter7_Labs.md",
-    "Untitled.base",
     "RHCSA_Labs/attachment",
-    "RHCSA_Labs",
-    "Untitled 1.base",
-    "Untitled 2.base"
+    "RHCSA_Labs"
   ]
 }
