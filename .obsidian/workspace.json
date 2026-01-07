@@ -14,7 +14,7 @@
               "type": "markdown",
               "state": {
                 "file": "RHCSA_NOTES/system_tuning.md",
-                "mode": "source",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
@@ -182,14 +182,16 @@
   },
   "active": "b3bd04efb26ee24d",
   "lastOpenFiles": [
+    "RHCSA_Labs/Chapter12_Labs.md",
+    "RHCSA_NOTES/system_tuning.md",
     "RHCSA_Labs/Chapter11_Labs.md",
+    "RHCSA_Labs/attachment/Pasted image 20260107162723.png",
     "RHCSA_Labs/attachment/Pasted image 20260103133218.png",
     "RHCSA_Labs/attachment/Pasted image 20260103133206.png",
     "RHCSA_Labs/attachment/Pasted image 20260103132729.png",
     "RHCSA_Labs/attachment/Pasted image 20260103132702.png",
     "RHCSA_Labs/attachment/Pasted image 20260103114843.png",
     "RHCSA_NOTES/user_and_group_management.md",
-    "RHCSA_NOTES/system_tuning.md",
     "Untitled 2.base",
     "RHCSA_Labs/attachment/7b49e0f96515858d0ae6e9165a9db3be.png",
     "Untitled.base",
@@ -219,9 +221,7 @@
     "RHCSA_Labs/Chapter6_Labs.md",
     "RHCSA_Labs/attachment/4c31022d43c4f2027868fad913338a7e.png",
     "RHCSA_Labs/attachment/5a2a27a7c43c6a9306dff3b874b42790.png",
-    "RHCSA_Labs/attachment/6560392bfacb3356da1fd519ddc43bf2.PNG",
     "RHCSA_LABS/Chapter11_Labs.md",
-    "RHCSA_Labs/Chapter8_Labs.md",
     "RHCSA_Labs/attachment",
     "RHCSA_Labs"
   ]
