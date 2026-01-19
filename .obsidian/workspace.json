@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "RHCSA_NOTES/networking.md",
+                "file": "RHCSA_NOTES/network_file_system.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "networking"
+              "title": "network_file_system"
             }
           }
         ],
@@ -197,13 +197,22 @@
   },
   "active": "dc818dc2c8f9b69b",
   "lastOpenFiles": [
-    "RHCSA_NOTES/troubleshooting.md",
+    "RHCSA_Labs/attachment/Pasted image 20260116165712.png",
+    "RHCSA_Labs/Chapter15_Labs.md",
+    "RHCSA_Labs/attachment/Pasted image 20260115173555.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115173546.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115150556.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115150534.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115150443.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115150344.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115150154.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115144957.png",
+    "RHCSA_Labs/attachment/Pasted image 20260115144821.png",
+    "RHCSA_Labs/Chapter14_Labs.md",
     "RHCSA_NOTES/networking.md",
+    "RHCSA_NOTES/troubleshooting.md",
     "RHCSA_NOTES/storage_and_filesystems.md",
     "RHCSA_Labs/attachment/Pasted image 20260114143156.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113181337.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113181100.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113172821.png",
     "RHCSA_NOTES/system_tuning.md",
     "RHCSA_NOTES/user_and_group_management.md",
     "README.md",
@@ -214,12 +223,6 @@
     "RHCSA_NOTES/package_management.md",
     "RHCSA_NOTES/processes_and_scheduling.md",
     "RHCSA_Labs/Chapter13_Labs.md",
-    "RHCSA_Labs/attachment/Pasted image 20260113143507.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113133147.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113124410.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113124307.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113124112.png",
-    "RHCSA_Labs/attachment/Pasted image 20260113124020.png",
     "RHCSA_Labs/Chapter6_Labs.md",
     "RHCSA_Labs/Chapter12_Labs.md",
     "RHCSA_Labs/Chapter11_Labs.md",
@@ -234,8 +237,6 @@
     "Lab_Writeups/Performing_Threat_Hunting.md",
     "RHCSA_NOTES/bash_shell.md",
     "RHCSA_NOTES/shell_scripting.md",
-    "RHCSA_NOTES/file_management.md",
-    "RHCSA_NOTES/containers.md",
     "RHCSA_NOTES",
     "RHCSA_Labs/attachment",
     "RHCSA_Labs"

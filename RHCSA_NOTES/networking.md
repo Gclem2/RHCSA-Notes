@@ -201,5 +201,53 @@ Used to view and manage network interfaces.
 - See `man nmcli-examples` for additional usage patterns.
 
 ---
-# Configure New Network Connection Manually
-1. Create a file called enp0s8-nmconnection in /etc
+# Understanding Hosts Table
+
+Each system IP should have an associated hostname to simplify access. Instead of repeatedly using IP addresses, hostname resolution allows systems to communicate using readable names.
+
+## Hostname Resolution Methods
+- **DNS:** Scalable solution for large networks and the Internet.
+- **Hosts table (`/etc/hosts`):** Commonly used on small or isolated networks for local hostname-to-IP mapping.
+
+## /etc/hosts File Format
+Each entry consists of:
+1. **IP address**
+2. **Canonical (official) hostname**
+3. **Optional aliases**
+
+### Example:
+
+This allows access to systems using either the full hostname or a short alias.
+
+## Notes
+- The hosts file must be updated **on each system** for consistency.
+- **EXAM TIP:** If DNS is properly configured and resolving all hostnames, maintaining `/etc/hosts` is unnecessary.
+
+---
+# Testing Network Connectivity
+
+RHEL provides the **ping** command to test network connectivity between systems. It sends 64-byte **ICMP** echo request packets to a destination IP and waits for replies. Successful responses confirm connectivity and basic network health.
+
+## Usage
+- `-c <count>`: Specify the number of packets to send.
+
+### Example
+Send two packets from `server10` to `server20` (192.168.0.120):
+
+## Interpreting Results
+- **Packets transmitted/received:** Should match.
+- **Packet loss:** Ideally 0%.
+- **Round-trip time (RTT):** Lower values indicate a healthier connection.
+
+## Common Tests
+- Local system IP
+- Loopback address: `127.0.0.1`
+- Default gateway
+- Other local or remote network addresses
+
+## Troubleshooting Failed Pings
+- Check NIC seating and driver installation
+- Verify network cable or link status
+- Confirm IP address and subnet mask
+- Ensure default gateway or static routes are correct
+---
