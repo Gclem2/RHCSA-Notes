@@ -271,15 +271,15 @@ Powerful CLI tool to manage firewalld service. Supports runtime and persistent r
 | `--permanent` | Store change persistently (active after reload/restart) |
 
 ### Zones
-| Option | Description |
-|--------|-------------|
-| `--get-default-zone` | Show default/active zone |
-| `--set-default-zone` | Change default zone (runtime + persistent) |
-| `--get-zones` | List available zones |
-| `--get-active-zones` | Show active zones and assigned interfaces |
-| `--list-all` | List all settings for a zone |
-| `--list-all-zones` | List settings for all zones |
-| `--zone=<name>` | Specify zone to work on (defaults to default zone) |
+| Option               | Description                                        |
+| -------------------- | -------------------------------------------------- |
+| `--get-default-zone` | Show default/active zone                           |
+| `--set-default-zone` | Change default zone (runtime + persistent)         |
+| `--get-zones`        | List available zones                               |
+| `--get-active-zones` | Show active zones and assigned interfaces          |
+| `--list-all`         | List all settings for a zone                       |
+| `--list-all-zones`   | List settings for all zones                        |
+| `--zone=<name>`      | Specify zone to work on (defaults to default zone) |
 
 ### Services
 | Option | Description |
@@ -349,4 +349,132 @@ sudo systemctl --now enable firewalld
 - **Enabled**: Service starts automatically at boot
 
 ---
-# Exercie 19-1
+# Exercise 19-1: Add Services and Ports, and Manage Zones
+
+1. Determine the name of the current default zone:
+```bash
+sudo firewal-cmd --get-default-zone
+```
+
+2. Add a permanent rle to allow HTTP traffic on its default port:
+```bash
+sudo firewall-cmd --permanent --add-service http
+```
+3. Activate the new rule:
+
+```bash
+sudo firewall-cmd --reload
+```
+4. Confirm the activation of the new rule:
+```bash
+sudo firewall-cmd --list-services
+```
+![](../RHCSA_Labs/attachment/Pasted%20image%2020260123152734.png)
+5. Display the content of the default zone file to confirm the addition of the permanent rule:
+```bash
+sudo cat /etc/firewalld/zones/public.xml
+```
+![](../RHCSA_Labs/attachment/Pasted%20image%2020260123152850.png)
+6. Add a runtime rule to allow traffic on  TCP port 443 and verify:
+```bash
+sudo firewall-cmd --add-port 443/tcp
+```
+
+7. Add a permanent rule to the internal zone for TCP port range 5901 to 5910:
+```bash
+sudo firewall-cmd --add-port 5901-5910/tcp --permanent --zone internal
+```
+8. Display the content of the internal zone file to confirm the addition of the permanent rule:
+```bash
+sudo cat /etc/firewalld/zones/internal.xml
+```
+9. Switch the default zone to internal and confirm:
+```bash
+sudo firewall-cmd --set-default-zone interal
+```
+
+---
+# Exercise 19-2: Remove Services and ports, and Manage Zones
+
+1. Remove the permanent rule for HTTP from the public zone:
+```bash
+sudo firewall-cmd --remove-service=http --zone public --permanent 
+```
+2. Remove the permanenet rule for ports 5901 to 5910 from the internal zone
+
+```bash
+sudo firewall-cmd --remove-port 5901-5910/tcp --permanent 
+```
+3. Switch the default zone to public and validate:
+```bash
+sudo firewall-cmd --set-default-zone=public
+sudo firewall-cmd --get-default-zone
+```
+
+4. Activate the public zone rules and list the current services:
+
+```bash
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-servieces
+```
+![](../RHCSA_Labs/attachment/Pasted%20image%2020260123154325.png)
+
+---
+# Exercise 19-3: Test the Effect of Firewall Rule
+
+1. Remove the rule for the sshd service on server10:
+```bash
+sudo firewall-cmd --remove-service ssh
+```
+2. Issue the ssh command on server20 to access server10:
+```bash
+ssh server10
+```
+3. Add the rule back for sshd one server10:
+```bash
+sudo firewall-cmd --add-service=ssh
+```
+4. Issue the ssh command on server20 to access server10. Enter es if prompted and the password for user1
+```
+ssh server10
+```
+
+---
+# Chapter 19 Summary
+
+## Key Topics Covered
+
+### Firewall Fundamentals
+- Host-based firewall solution for system protection
+- How firewalls work (packet filtering, header inspection)
+
+### firewalld Service
+- Dynamic firewall management (no service restart needed)
+- Configuration locations: `/usr/lib/firewalld/` (defaults), `/etc/firewalld/` (custom)
+
+### Zones
+- Trust-based policies for network connections
+- Predefined zones: trusted → internal → home → work → dmz → external → **public (default)** → block → drop
+- Zone configuration files (XML format)
+
+### Services
+- Preconfigured rules for specific services
+- Service configuration files (XML format with port/protocol)
+- Default: all traffic blocked unless service/port explicitly opened
+
+### Management with firewall-cmd
+- Check status: `--state`, `systemctl status firewalld`
+- Zones: `--get-zones`, `--set-default-zone`, `--list-all`
+- Services: `--add-service`, `--remove-service`, `--list-services`
+- Ports: `--add-port`, `--remove-port`, `--list-ports`
+- Interfaces: `--add-interface`, `--list-interfaces`
+- Sources: `--add-source`, `--list-sources`
+- Persistence: `--permanent` flag + `--reload`
+
+## Exercises Performed
+- Changed/checked firewalld operational state
+- Added/removed services and ports (runtime and persistent)
+- Managed zones
+- Tested port deletion and restoration
+
+---
