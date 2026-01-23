@@ -331,4 +331,3 @@ ssh-copy-id server20
 ```bash
 ssh server20
 ```
-5. 
