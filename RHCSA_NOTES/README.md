@@ -5,7 +5,7 @@ The notes follow *RHCSA Red Hat Enterprise Linux 9: Training and Exam Preparatio
 
 ---
 
-## 📚 Topics
+## Topics
 
 - [Installation and Initial Setup](installation_and_initial_setup.md)  
 - [File Management](file_management.md)  
@@ -27,14 +27,14 @@ The notes follow *RHCSA Red Hat Enterprise Linux 9: Training and Exam Preparatio
 
 ---
 
-## 🎯 Purpose
+##  Purpose
 - Provide a **structured study guide** for RHCSA exam prep  
 - Include **commands, examples, and practice tasks**  
 - Serve as a **reference** for daily sysadmin tasks  
 
 ---
 
-## 🛠 Usage
+## Usage
 Clone the repo and study topic by topic:  
 ```bash
 git clone https://github.com/your-username/rhcsa-notes.git
