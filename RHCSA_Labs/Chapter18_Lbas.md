@@ -42,4 +42,57 @@ ssh user20@server30
 - Subsequent logins are passwordless
 
 ---
-Lab 18-2: Test the Effect of PermitRootLogin Directive As user1 with sudo on server40, edit the /etc/ssh/sshd_config file and change the value of the directive PermitRootLogin to “no”. Use the systemctl command to activate the change. As root on server30, run ssh server40 (or use its IP). You’ll get permission denied message. Reverse the change on server40 and retry ssh server40. You should be able to log in. (Hint: The OpenSSH Service).
+# Lab 18-2: Test the Effect of PermitRootLogin Directive
+
+## Objective
+Test how `PermitRootLogin` directive controls root SSH access
+
+## Steps
+
+### 1. Disable Root Login (on server40)
+```bash
+# As user1 with sudo on server40
+sudo vi /etc/ssh/sshd_config
+```
+Change:
+```
+PermitRootLogin no
+```
+
+### 2. Apply Changes
+```bash
+# Restart sshd service
+sudo systemctl restart sshd
+```
+
+### 3. Test Root Login (from server30)
+```bash
+# As root on server30
+ssh root@server40
+# Result: Permission denied
+```
+
+### 4. Re-enable Root Login (on server40)
+```bash
+# As user1 with sudo on server40
+sudo vi /etc/ssh/sshd_config
+```
+Change:
+```
+PermitRootLogin yes
+```
+
+### 5. Apply and Retest
+```bash
+# Restart sshd service
+sudo systemctl restart sshd
+
+# From server30 as root
+ssh root@server40
+# Result: Login successful
+```
+
+## Key Points
+- `PermitRootLogin no` blocks direct root SSH access
+- Changes require `systemctl restart sshd` to take effect
+- Security best practice: disable root login, use sudo instead
