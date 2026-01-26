@@ -478,3 +478,669 @@ ssh server10
 - Tested port deletion and restoration
 
 ---
+# Chapter 20: Security Enhanced Linux
+
+## Overview
+SELinux is a kernel-level mandatory access control (MAC) mechanism that provides security beyond traditional DAC (user/group/permissions)
+
+## Purpose
+- Control **who** can access **what** on the system
+- Limit damage from unauthorized user or program access
+- Enforce security policies beyond standard file permissions
+
+## Traditional Security vs SELinux
+**Traditional (DAC - Discretionary Access Control)**:
+- File/directory permissions (rwx)
+- User and group ownership
+- Shadow passwords and password aging
+
+**SELinux (MAC - Mandatory Access Control)**:
+- Additional layer on top of DAC
+- Context-based access control
+- Policy enforcement at kernel level
+
+## RHCSA Objectives Covered
+- **55**: Set enforcing and permissive modes
+- **56**: List and identify file and process contexts
+- **57**: Restore default file contexts
+- **58**: Manage SELinux port labels
+- **59**: Use Boolean settings to modify SELinux
+- **60**: Diagnose and address SELinux policy violations
+
+## Topics Covered
+1. SELinux terminology and concepts
+2. Contexts for users, processes, files, and ports
+3. Copy/move/archive files with SELinux context
+4. Domain transitioning
+5. SELinux Booleans
+6. Query and manage SELinux (tools)
+7. Modify contexts for files and ports
+8. Add SELinux rules to policy database
+9. View and analyze SELinux alerts
+
+---
+# Security Enhanced Linux
+
+## What is SELinux?
+Mandatory Access Control (MAC) developed by NSA, integrated into kernel via LSM framework
+
+## DAC vs MAC
+- **DAC** (Traditional): File permissions, ownership, setuid/setgid, su/sudo
+- **MAC** (SELinux): Additional layer limiting subject (user/process) access to object (file/device/port)
+
+## How It Works
+- **Policy**: Authorization rules
+- **Context/Label**: Security attributes on subjects and objects
+- **AVC (Access Vector Cache)**: Stores decisions for performance
+
+### Access Flow
+Subject → Check AVC → Check policy (if not cached) → Allow/Deny
+
+## Fine-Grained Control
+Compromised service (e.g., HTTP) only damages what that process can access, not other processes/objects
+
+## Default
+Enabled at install, confines processes to minimum required privileges
+
+---
+# SELinux Terminology
+
+## Core Components
+
+### Subject
+User or process accessing an object  
+**Examples**: `system_u` (SELinux system user), `unconfined_u` (not bound by policy)  
+**Location**: Field 1 of context
+
+### Object
+Resource being accessed (file, directory, device, port, socket, etc.)  
+**Examples**: `object_r` (general), `system_r` (system-owned), `unconfined_r` (not bound by policy)
+
+### Access
+Action performed by subject on object (create, read, update file; access port)
+
+### Policy
+Ruleset enforced system-wide to analyze security attributes and decide access  
+**Default behavior**: Deny if no rule exists
+
+**Policy Types**:
+- **targeted** (default): Targeted processes run confined, others unconfined (e.g., httpd confined, users unconfined)
+- **mls**: Tight security at deeper levels
+- **minimum**: Light version protecting only selected processes
+
+## Security Attributes
+
+### Context (Label)
+Tag storing security attributes for subjects/objects  
+**Format**: `SELinux_user:role:type(domain):level`
+
+### Labeling
+Mapping files with their stored contexts
+
+### SELinux User
+Predefined identities authorized for specific roles  
+Maps Linux users to SELinux users to restrict role/level access  
+**Example**: User mapped to `user_u` cannot run su/sudo or execute programs in home directory
+
+### Role (RBAC)
+Classifies who can access what domains/types  
+**Examples**: `user_r` (users), `sysadm_r` (admins), `system_r` (system processes)  
+**Location**: Field 2 of context
+
+### Type Enforcement (TE)
+Limits subject access to domains (processes) and types (files) using contexts
+
+### Type & Domain
+**Type**: Group of objects with common security requirements  
+- **Examples**: `user_home_dir_t` (user home dirs), `usr_t` (/usr objects)  
+- **Location**: Field 3 of file context
+
+**Domain**: Defines process access; groups processes with common security needs  
+- **Examples**: `init_t` (systemd), `firewalld_t` (firewalld), `unconfined_t` (not bound by policy)  
+- **Location**: Field 3 of process context
+
+### Level (MLS/MCS)
+Pair of `sensitivity:category` values  
+**RHEL 9 default**: MCS with one sensitivity (s0) and 0-1023 categories (e.g., `s0:c0.c4`)
+
+---
+# SELinux Contexts for Users
+
+## Viewing User Context
+```bash
+id -Z
+# Example output for user1:
+unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+```
+
+**Format**: `user:role:type:level`
+
+## Default Behavior
+- All Linux users (including root) run **unconfined** by default
+- **unconfined_u**: No SELinux restrictions, full system access
+
+## SELinux User Types
+
+### Unconfined User
+`unconfined_u` - Unlimited privileges (default for all users)
+
+### Confined Users (7 types)
+Restricted access mapped to Linux users via policy to protect system from user damage
+
+## Listing SELinux Users
+```bash
+# Requires setools-console package
+seinfo -u
+```
+Shows 8 predefined SELinux users
+
+## User Mapping
+```bash
+semanage login -l
+```
+
+**Output columns**:
+1. **Login Name**: Linux user (or `__default__` for all non-root users)
+2. **SELinux User**: Mapped SELinux identity
+3. **MLS/MCS Range**: Security level
+4. **Service**: Context (usually `*` for all services)
+
+**Default mapping**: `__default__` → `unconfined_u`
+
+---
+# SELinux Contexts for Processes
+
+## Viewing Process Context
+```bash
+ps -eZ
+# Example output (first two lines):
+system_u:system_r:init_t:s0    1  ?  00:00:02 systemd
+```
+
+**Format**: `user:role:domain:level`
+
+## Context Fields
+- **User** (`system_u`): SELinux username (mapped to Linux user, e.g., root)
+- **Role** (`system_r`): Object/role
+- **Domain** (`init_t`): Type of protection applied to process
+- **Level** (`s0`): Security level
+
+## Unprotected Processes
+Run in **`unconfined_t`** domain (no SELinux restrictions)
+
+---
+# SELinux Contexts for Files
+
+## Viewing File Context
+```bash
+ls -Z /etc/passwd
+# Output:
+system_u:object_r:passwd_file_t:s0 /etc/passwd
+```
+
+**Format**: `user:role:type:level`
+
+## Context Fields
+- **User** (`system_u`): Subject
+- **Role** (`object_r`): Object
+- **Type** (`passwd_file_t`): File type classification
+- **Level** (`s0`): Security level
+
+## Context Storage
+- **System files**: `/etc/selinux/targeted/contexts/files/file_contexts`
+- **User-created files**: `/etc/selinux/targeted/contexts/files/file_contexts.local`
+- **Management**: Use `semanage` command to update policy files
+
+---
+# Copying, Moving, and Archiving Files with SELinux Contexts
+
+## Default Behavior
+- New files inherit **parent directory's context**
+- All RHEL files labeled with SELinux context by default
+
+## File Operation Rules
+
+### 1. Copy to Different Directory
+```bash
+cp file /dest/
+```
+- Destination file gets **destination directory's context**
+- Preserve original: `cp --preserve=context file /dest/`
+
+### 2. Copy Overwriting Existing File
+```bash
+cp file /dest/existing_file
+```
+- Copied file gets **overwritten file's context**
+- Preserve original: `cp --preserve=context file /dest/existing_file`
+
+### 3. Move File
+```bash
+mv file /dest/
+```
+- File **retains original context** (may differ from destination directory)
+
+### 4. Archive with tar
+```bash
+tar --selinux -czf archive.tar.gz files/
+```
+- Use `--selinux` option to preserve contexts
+
+## Key Points
+- **Copy**: Gets destination context (unless `--preserve=context`)
+- **Move**: Keeps original context
+- **Archive**: Use `--selinux` flag
+
+---
+# SELinux Contexts for Ports
+
+## Viewing Port Contexts
+```bash
+semanage port -l
+```
+
+**Output columns**:
+1. **SELinux Type**: Port type label
+2. **Protocol**: tcp/udp
+3. **Port Number(s)**: Assigned port(s)
+
+## Default Behavior
+SELinux allows services to listen only on **restricted set of network ports**
+
+## Example Output
+```
+ssh_port_t         tcp    22
+http_port_t        tcp    80, 443, 488, 8008, 8009, 8443
+```
+
+Services confined to their designated ports by default
+
+---
+# SELinux Booleans
+
+## Overview
+On/off switches that activate/deactivate specific SELinux policy rules **immediately** (no recompile/reload needed)
+
+## Purpose
+Control permissions dynamically  
+**Example**: `ftpd_anon_write` Boolean enables/disables anonymous FTP uploads
+
+## Storage Locations
+- **Runtime values**: `/sys/fs/selinux/booleans/` (virtual files, values: `1` or `0`)
+- **Permanent values**: SELinux policy database
+
+## Documentation
+```bash
+# Install manual pages
+yum install selinux-policy-doc
+
+# View Boolean documentation
+man -K boolean_name
+# Example: man -K abrt_anon_write
+```
+
+## Boolean Operations
+- **View**: Check current Boolean values
+- **Temporary change**: Modify runtime (stored in `/sys/fs/selinux/booleans/`)
+- **Permanent change**: Update policy database (survives reboot)
+- **Effect**: Changes take effect immediately
+
+## Typical System
+Hundreds of Boolean files available for fine-grained control
+
+---
+# SELinux Administration
+
+## Management Tasks
+- Control activation mode
+- Check operational status
+- Set security contexts on subjects/objects
+- Switch Boolean values
+
+## Essential Packages & Commands
+
+| Package | Commands | Purpose |
+|---------|----------|---------|
+| `libselinux-utils` | `getenforce`, `setenforce`, `getsebool` | Check/set enforcement mode, view Booleans |
+| `policycoreutils` | `sestatus`, `setsebool`, `restorecon` | Status, set Booleans, restore contexts |
+| `policycoreutils-python-utils` | `semanage` | Manage contexts, ports, users |
+| `setools-console` | `seinfo`, `sesearch` | Query policy information, search rules |
+| `setroubleshoot-server` | SELinux Alert Browser (GUI) | View alerts, debug issues |
+
+## Installation
+Ensure all packages installed for full SELinux management capability
+
+## Additional Tools
+Other utilities available for specific tasks (less frequently used)
+
+---
+# SELinux Management Commands
+
+## Mode Management
+| Command | Description |
+|---------|-------------|
+| `getenforce` | Display current mode (enforcing/permissive/disabled) |
+| `setenforce` | Switch between enforcing/permissive temporarily |
+| `sestatus` | Show runtime status and Boolean values |
+| `grubby` | Update/display grub2 boot loader config |
+
+## Context Management
+| Command | Description |
+|---------|-------------|
+| `chcon` | Change file contexts (lost on relabeling) |
+| `restorecon` | Restore default contexts from `/etc/selinux/targeted/contexts/files` |
+| `semanage fcontext` | Change file contexts permanently (survives relabeling) |
+
+## Policy Management
+| Command | Description |
+|---------|-------------|
+| `seinfo` | Display policy component information |
+| `semanage` | Manage policy database |
+| `sesearch` | Search policy rules |
+
+## Boolean Management
+| Command | Description |
+|---------|-------------|
+| `getsebool` | Display Booleans and current settings |
+| `setsebool` | Modify Boolean values (temporary or permanent with `-P`) |
+| `semanage boolean` | Modify Boolean values in policy database |
+
+## Troubleshooting
+| Command | Description |
+|---------|-------------|
+| `sealert` | Graphical troubleshooting tool (SELinux Alert Browser) |
+
+## Key Distinction
+- **Temporary changes**: `chcon`, `setenforce`, `setsebool` (without `-P`)
+- **Permanent changes**: `semanage`, `setsebool -P`, `restorecon`
+
+---
+# Viewing and Controlling SELinux Operational State
+
+## Configuration File
+**Location**: `/etc/selinux/config`
+
+### Key Directives
+```bash
+SELINUX=enforcing    # enforcing, permissive, or disabled
+SELINUXTYPE=targeted # Policy type (default: targeted)
+```
+
+## Operating Modes
+| Mode | Behavior |
+|------|----------|
+| **enforcing** | Enabled, allows/denies based on policy rules |
+| **permissive** | Enabled, allows all but logs violations (troubleshooting/tuning) |
+| **disabled** | SELinux completely off |
+
+## View Current Mode
+```bash
+getenforce
+# Output: Enforcing
+```
+
+## Temporary Mode Change (Runtime Only)
+```bash
+# Switch to permissive
+setenforce 0    # or: setenforce permissive
+
+# Switch to enforcing
+setenforce 1    # or: setenforce enforcing
+
+# Verify
+getenforce
+```
+
+**Lost on reboot** - edit `/etc/selinux/config` for persistence
+
+## Persistent Disable
+```bash
+# Disable via bootloader
+grubby --update-kernel ALL --args selinux=0
+
+# Re-enable
+grubby --update-kernel ALL --remove-args selinux=0
+```
+
+Modifies `/boot/loader/entries/` bootloader config
+
+## EXAM TIP
+Switch to **permissive** for troubleshooting non-functioning services, then **change back to enforcing** when resolved
+
+---
+# Modify SELinux File Context
+
+1. Create the hierarchy sedir1/sefile1 under /tmp:
+```bash
+cd /tmp
+mkdir sedir1
+touch sedir1/sefile1
+```
+2. Determine the context on the new directory and file:
+```bash
+ls -ldZ sedir1
+ls -ldZ sedir1/sefile1
+```
+
+3. Modify the SELinux user (-u) on the directory to user_u and type (-t) to public_content_t recursively (-R) with the chcon command:
+```bash
+sudo chcon -vu user_u -t public_content_t sedir1 -R
+```
+4. Validate the new context:
+```bash
+ls -ldZ sedir
+```
+
+---
+# Add and Apply File Context
+
+1. Determine the current context:
+```bash
+ls -ldZ sedir1
+```
+2. Add (-a) the directory recursively to the policy database using the semanage command with the fcontext suubcommand:
+```bash
+sudo semanage fcontext -a -s user_u -t public_content_t '/tmp/sedir1(/.*)?'
+```
+3. Validate the addition by listing (-l) the recent changes (-C) in the policy database:
+```bash
+sudo semanage fcontext -Cl | grep sedir
+```
+4. Change the current context on sedir1 to something random (staff_u/etc_t) with the chcon command:
+```bash
+sudo chcon -vuu staff_u -t etc_t sedir1 -R
+```
+5. The secuurity context is changed successfully. Confirm with the ls command:
+```bash
+ls -ldZ sedir1 ; ls -lZ sedir1/sefile1
+```
+![](../RHCSA_Labs/attachment/Pasted%20image%2020260126140757.png)
+6. Reinstate the context on sedir1 direcotr recursively (-R) as stored in the policy database using the restorecon command:
+```bash
+sudo restorecon -Rv sedir1
+```
+
+---
+# Add and Delete Network Ports
+
+1. List (-l) the ports for the httpd service as defined in the SELinux policy database:
+```bash
+sudo semanage port -l | grep ^http_port
+```
+2. Add (-a) port 8010 with type (-t) http_port_t and protocol (-p) tcp to the policy:
+```bash
+sudo semanage port -at http_port_t -p tcp 8010
+```
+3. Confirm the addition:
+```bash
+sudo semanage port -l | grep ^http_port
+```
+4. Delete (-d) port 8010 form the policy and confirm:
+```bash
+sudo semanage port -dp tcp 8010
+sudo semanage port -l | grep ^http_port
+```
+
+---
+# Copy Files with and without Context
+1. Create file sefile2 under /tmp and show context:
+```bash
+touch /tmp/sefile2
+ls -lZ /tmp/sefile2
+```
+2. Copy this file to the /etc/default directory, and check the context again:
+```bash
+sudo cp /tmp/sefile2 /etc/default/
+ls -lZ /etc/default sefile2
+```
+3. Erase the /etc/default/sefile2 file, and copy it again with the --preserve=context option:
+```bash
+sudo rm /etc/default sefile2
+```
+
+---
+# View and Toggle SELinux Boolean Values
+
+1. Display the current setting of the Boolean nfs_export_all_rw using three different commands--getsebool, sestatus, and semanage
+```bash
+sudo getsebool -a | grep nfs_export_all_rw
+sudo sestatus -b | grep nfs_export _all_rw
+sudo semanage boolean -l | grep nfs_export
+```
+2. Turn off the value of nfs_export_all_rw using the seetsebool command by simply furnishhing "off" or "0" with it and confirm:
+```bash
+sudo setsebool nfs_export_all_rw 0
+sudo getsebool -a | grep nfs_export_all_rw
+```
+3. Reboot the system and rerun the ggetsebool command to check the Boolean state:
+```bash
+sudo getseboool -a | grep nfs_export_all_rw
+```
+4. Set the value of the Boolean persistently -P or -m as needed using either of the following:
+```bash
+sudo setsebool -P nfs_export_all_rw off
+sudo semanage boolean -m -0 nfs_export_all_rw
+```
+5. Validate the new value using the gesebool, sestatus, or semanage command:
+```bash
+sudo getsebool fs_export_all_rw
+```
+
+---
+# Monitoring and Analyzing SELinux Violations
+
+## Log Locations
+- **Primary**: `/var/log/audit/audit.log` (if auditd running)
+- **Fallback**: `/var/log/messages` (via rsyslog if auditd absent)
+
+## Denial Messages
+- Tagged with **AVC** (Access Vector Cache) type
+- Includes message ID and viewing instructions
+- **Troubleshooting tip**: If works in permissive but not enforcing → SELinux needs adjustment
+
+## Analysis Process
+
+### 1. SELinux Access Request Flow
+```
+Subject → Access Request → SELinux Policy Check → Allow/Deny → Target Object
+                                ↓
+                         Log to audit.log (AVC)
+```
+
+### 2. setroubleshoot Service
+- **Daemon**: `setroubleshootd` (background analysis)
+- **Client**: `sealert` command (text/GUI interface)
+- **Package**: `setroubleshoot-server` (must be installed)
+- Analyzes denials, provides recommendations
+
+## Sample Records
+
+### Allowed Access (audit.log)
+```
+type=USER_AUTH ... user1 successfully su to root on server10
+```
+
+### Denied Access (audit.log)
+```
+type=AVC msg=audit(...): avc: denied { write } 
+  scontext=unconfined_u:unconfined_r:passwd_t:s0-s0:c0.c1023
+  tcontext=system_u:object_r:etc_t:s0
+  tclass=file comm="passwd" name="nshadow"
+  permissive=0
+```
+
+**Key fields**:
+- `scontext`: Source context (passwd command)
+- `tcontext`: Target context (shadow file with wrong type `etc_t`)
+- `tclass`: Object class (file)
+- `permissive=0`: Enforcing mode
+
+## Analyzing Denials
+```bash
+# Analyze all AVC records
+sealert -a /var/log/audit/audit.log
+```
+
+Produces formatted report with:
+- Root cause
+- Recommended fixes
+- Relevant details
+
+## Example Scenario
+1. **Problem**: Changed `/etc/shadow` type to `etc_t` (incorrect)
+2. **Result**: `passwd` command denied writing to shadow file
+3. **Fix**: `restorecon /etc/shadow` (restored correct type)
+4. **Verify**: Password change successful
+
+## Key Point
+Check SELinux logs when service fails - often context mismatch issue
+
+---
+# Monitoring and Analyzing SELinux Violations
+
+## Log Locations
+- **Primary**: `/var/log/audit/audit.log` (if auditd running)
+- **Fallback**: `/var/log/messages` (via rsyslog)
+- **Denials**: Tagged with **AVC** (Access Vector Cache)
+
+**Troubleshooting tip**: Works in permissive but not enforcing → adjust SELinux
+
+## Analysis Tools
+
+### setroubleshoot Service
+- **Daemon**: `setroubleshootd` (background analysis)
+- **Client**: `sealert` (text/GUI)
+- **Package**: `setroubleshoot-server`
+- Analyzes denials, provides fix recommendations
+
+## Sample Log Entries
+
+### Allowed Access
+```
+type=USER_AUTH ... user1 successfully su to root
+```
+
+### Denied Access (AVC)
+```
+type=AVC avc: denied { write }
+  scontext=unconfined_u:unconfined_r:passwd_t:...
+  tcontext=system_u:object_r:etc_t:s0
+  tclass=file comm="passwd" name="nshadow"
+  permissive=0
+```
+
+**Key fields**: `scontext` (source), `tcontext` (target), `tclass` (object type), `permissive=0` (enforcing)
+
+## Analyze Denials
+```bash
+sealert -a /var/log/audit/audit.log
+```
+Produces formatted report with cause and recommendations
+
+## Example Fix
+**Problem**: `/etc/shadow` has wrong type (`etc_t`)  
+**Result**: `passwd` command denied  
+**Solution**: `restorecon /etc/shadow`  
+**Verify**: Password change works
+
+---
