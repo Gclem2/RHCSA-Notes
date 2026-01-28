@@ -1,4 +1,4 @@
-# Lab 15-1: Add New Interfface and Configure Connection Profile with nmcli
+# Lab 15-1: Add New Interface and Configure Connection Profile with nmcli
 ![](attachment/Pasted%20image%2020260115150534.png)
 1. Verify the new interface
 ```bash 
