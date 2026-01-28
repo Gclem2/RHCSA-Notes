@@ -969,3 +969,319 @@ sudo podman rm rhel9-persistent-data
 sudo podman run -it --name rhel8-persistent-data
 -v/host_data:/container_data2:Z ubi8
 ```
+9. Confirm the presence of the director inside the container with ls on /container_data2:
+```bash
+ls -ldz /container_data2/
+```
+10. Create a file called testfile2 with the echo command under /container_data2:
+```bash
+echo "This is persistent storage2. " > /container_data2/testfile2
+```
+11. Exit out of the container and confirm the existenece of both files:
+```bash 
+exit
+```
+12. Stop and remove the container
+```bash
+sudo podman stop rhel8-persistent-data
+sudo podman rm rhel8-persistent-data
+```
+---
+# Container State Management with systemd
+
+## Purpose
+Automate container start/stop via systemd (vs manual `podman` commands)
+
+## Benefits
+- Auto-start containers at boot
+- Auto-stop containers at shutdown
+- Manual control via `systemctl`
+- No need for `podman start/stop` commands
+
+## Setup Steps
+
+### 1. Generate systemd Unit File
+```bash
+# Rootless
+podman generate systemd --new --name <container> --files
+
+# Rootful
+sudo podman generate systemd --new --name <container> --files
+```
+
+### 2. Move Unit File to Correct Location
+
+| Container Type | Directory | Command |
+|----------------|-----------|---------|
+| **Rootless** | `~/.config/systemd/user/` | `mkdir -p ~/.config/systemd/user && mv *.service ~/.config/systemd/user/` |
+| **Rootful** | `/etc/systemd/system/` | `sudo mv *.service /etc/systemd/system/` |
+
+### 3. Reload systemd
+```bash
+# Rootless
+systemctl --user daemon-reload
+
+# Rootful
+sudo systemctl daemon-reload
+```
+
+### 4. Enable and Start Service
+```bash
+# Rootless
+systemctl --user enable --now <service>
+
+# Rootful
+sudo systemctl enable --now <service>
+```
+
+## Rootless Container Behavior
+
+### Default
+- **Start**: When user logs in
+- **Stop**: When user logs off (all sessions closed)
+
+### Enable Lingering (Recommended)
+```bash
+loginctl enable-linger <username>
+```
+
+**Effect**:
+- User manager runs at system startup
+- Containers start at boot (no login required)
+- Containers persist after logout
+- Supports long-running services
+
+### Disable Lingering
+```bash
+loginctl disable-linger <username>
+```
+
+## Manage Container via systemd
+```bash
+# Rootless
+systemctl --user start <service>
+systemctl --user stop <service>
+systemctl --user status <service>
+
+# Rootful
+sudo systemctl start <service>
+sudo systemctl stop <service>
+sudo systemctl status <service>
+```
+
+## Important Notes
+
+**Do NOT mix methods**: Once systemd configured, avoid using `podman start/stop` (causes conflicts)
+
+**User requirements**:
+- Rootless: Normal user (no sudo needed)
+- Rootful: Root user or sudo
+
+## EXAM TIP
+**Use normal user for rootless containers, root/sudo for rootful containers**
+
+> See Chapter 12 for systemd details
+---
+# Configure a Rootful Containe as a systemd Service
+
+1. Launch a new container called rootful-container --name -d mode
+
+```bash
+sudo podman run -dt --name rootful-container ubi9
+```
+2. Confirm container using podman ps
+```bash 
+sudo podman ps
+```
+3. Create a service unit file called rootful-container.server
+```bash
+sudo podman generate systemd --new --name rootful-container | sudo tee /etc/systemd/system/rootful-container.service
+```
+4. Stop and delete the source container using the stop rm subcommands:
+```bash
+sudo podman stop rootful-container
+sudo podman rm rootful-container
+```
+5. Updatet systemd to bring the new service nder its control
+```bash
+sudo systemctl daemon-reload
+```
+6. Enable and start the container service using systemctl
+```bash
+sudo systemctl enable --now rootful-container
+```
+7. Check the running status of the new service with the systemctl command: 
+```bash
+sudo systemctl status rootful-container
+```
+8. Verify the launch of a new container 
+```bash
+sudo podman ps
+```
+9. Restart tthe container service using the systemctl command:
+```bash
+sudo systemctl restart rootful-container
+sudo systemctl status rootful-container
+```
+
+10. Check the status of the container again. Observe the removal of the pervious container and launch of a new container
+```bash
+sudo podman ps
+```
+---
+# Configure Rootless Container as a systemd service
+
+# Exercise 22-11: Configure Rootless Container as systemd Service
+
+## Objective
+Create systemd unit file for rootless container management as conuser1
+
+## Steps
+
+### 1. Create User Account
+```bash
+# As user1 with sudo
+sudo useradd conuser1
+echo "password" | sudo passwd --stdin conuser1
+```
+
+### 2. Prepare Directory Structure
+```bash
+# Log in as conuser1 (new terminal)
+su - conuser1
+
+# Create systemd user directory
+mkdir -p ~/.config/systemd/user
+```
+
+### 3. Launch Test Container
+```bash
+podman run -d --name rootless-container registry.access.redhat.com/ubi8/ubi:latest sleep infinity
+```
+
+### 4. Verify Container Running
+```bash
+podman ps
+# Note the container ID
+```
+
+### 5. Generate systemd Unit File
+```bash
+cd ~/.config/systemd/user
+podman generate systemd --new --name rootless-container --files
+```
+
+Creates: `container-rootless-container.service`
+
+### 6. View Unit File
+```bash
+cat ~/.config/systemd/user/container-rootless-container.service
+```
+
+### 7. Remove Source Container
+```bash
+podman stop rootless-container
+podman rm rootless-container
+
+# Verify removal
+podman ps -a
+```
+
+### 8. Reload systemd
+```bash
+systemctl --user daemon-reload
+# Or reboot if required
+```
+
+### 9. Enable and Start Service
+```bash
+systemctl --user enable --now container-rootless-container.service
+```
+
+### 10. Check Service Status
+```bash
+systemctl --user status container-rootless-container.service
+```
+
+### 11. Verify New Container Launch
+```bash
+podman ps
+# Compare container ID with original (should be different)
+```
+
+### 12. Enable Lingering
+```bash
+# Exit conuser1 session, run as user1 with sudo
+loginctl enable-linger conuser1
+
+# Verify
+loginctl show-user conuser1 | grep Linger
+# Output: Linger=yes
+```
+
+### 13. Restart Service
+```bash
+# As conuser1
+systemctl --user restart container-rootless-container.service
+```
+
+### 14. Verify Container Recreation
+```bash
+podman ps
+# New container ID (previous container removed, new one launched)
+```
+
+## Key Observations
+- Each service restart creates **new container** (compare IDs)
+- System reboot creates **new container**
+- Lingering enables container start at boot (no login required)
+- `--new` flag ensures container recreated from image (not dependent on source container)
+
+## Summary
+- **Service file**: `~/.config/systemd/user/container-rootless-container.service`
+- **Control**: `systemctl --user [start|stop|restart|status] container-rootless-container.service`
+- **Auto-start**: Enabled via lingering
+- **Container lifecycle**: Managed by systemd (not podman)
+---
+# Chapter 22 Summary
+
+## Container Technology
+Massively popular virtualization technology with unmatched benefits
+
+## Core Components
+- **Images**: Templates for containers (built from Containerfiles)
+- **Registries**: Storage for images (remote and local)
+- **Containers**: Running instances of images
+
+## Topics Covered
+
+### Image Management
+- Interact with remote registries and local storage
+- Search, pull, inspect, list, delete images
+- Build custom images using Containerfile instructions
+
+### Container Operations
+- Launch containers (named and anonymous)
+- Multiple launch methods and options
+- Basic lifecycle management (start, stop, restart, remove)
+
+### Advanced Features
+- **Port mapping**: Network connectivity between containers and host
+- **Environment variables**: Pass/set variables for container use
+- **Persistent storage**: Attach host directories for data persistence
+
+### systemd Integration
+- Control rootful and rootless containers via systemd
+- Auto-start containers at boot
+- Auto-stop containers at shutdown
+- Enable lingering for rootless containers
+
+## Key Tools
+- **podman**: Primary container management tool
+- **skopeo**: Remote image inspection
+- **systemd**: Container service control
+
+## Rootful vs Rootless
+- **Rootful**: Run as root, full privileges, higher security risk
+- **Rootless**: Run as normal user, restricted privileges, more secure
+---
